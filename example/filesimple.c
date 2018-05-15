@@ -8,9 +8,24 @@
  * tokens is predictable.
  */
 
-static const char *JSON_STRING =
-	"{\"user\": \"johndoe\", \"admin\": false, \"uid\": 1000,\n  "
-	"\"groups\": [\"users\", \"wheel\", \"audio\", \"video\"]}";
+char *readJSONFile() {
+	FILE* fp = fopen("..\\data.json","r");
+	if(f == NULL) return NULL;
+	char* JSON_STRING;
+	char oneline[255];
+	while(!feof(fp)) {
+		cache = fgets(JSON_STRING, count, fp);
+		count = strlen(oneline);
+		(char*)realloc(sizeof(count));
+		strcat(JSON_STRING,)
+	}
+	return JSON_STRING;
+	fclose(fp);
+}
+
+static const char *JSON_STRING = readJSONFile();
+	//"{\"user\": \"johndoe\", \"admin\": false, \"uid\": 1000,\n  "
+	//"\"groups\": [\"users\", \"wheel\", \"audio\", \"video\"]}";
 
 static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
 	if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start &&
@@ -41,31 +56,43 @@ int main() {
 
 	/* Loop over all keys of the root object */
 	for (i = 1; i < r; i++) {
-		if (jsoneq(JSON_STRING, &t[i], "user") == 0) {
+		if (jsoneq(JSON_STRING, &t[i], "Name") == 0) {
 			/* We may use strndup() to fetch string value */
-			printf("- User: %.*s\n", t[i+1].end-t[i+1].start,
+			printf("\"Name\": %.*s\n", t[i+1].end-t[i+1].start,
 					JSON_STRING + t[i+1].start);
 			i++;
-		} else if (jsoneq(JSON_STRING, &t[i], "admin") == 0) {
+		} else if (jsoneq(JSON_STRING, &t[i], "keywords") == 0) {
 			/* We may additionally check if the value is either "true" or "false" */
-			printf("- Admin: %.*s\n", t[i+1].end-t[i+1].start,
+			printf("\"keywords\": %.*s\n", t[i+1].end-t[i+1].start,
 					JSON_STRING + t[i+1].start);
 			i++;
-		} else if (jsoneq(JSON_STRING, &t[i], "uid") == 0) {
+		} else if (jsoneq(JSON_STRING, &t[i], "description") == 0) {
 			/* We may want to do strtol() here to get numeric value */
-			printf("- UID: %.*s\n", t[i+1].end-t[i+1].start,
+			printf("\"description\": %.*s\n", t[i+1].end-t[i+1].start,
 					JSON_STRING + t[i+1].start);
 			i++;
-		} else if (jsoneq(JSON_STRING, &t[i], "groups") == 0) {
+		} else if (jsoneq(JSON_STRING, &t[i], "exclude") == 0) {
+                        printf("\"exclude\": %.*s\n", t[i+1].end-t[i+1].start,
+                                        JSON_STRING + t[i+1].start);
+                        i++;
+		} else if (jsoneq(JSON_STRING, &t[i], "repository") == 0) {
 			int j;
-			printf("- Groups:\n");
+			printf("\"repository\":\n(");
 			if (t[i+1].type != JSMN_ARRAY) {
 				continue; /* We expect groups to be an array of strings */
 			}
 			for (j = 0; j < t[i+1].size; j++) {
-				jsmntok_t *g = &t[i+j+2];
-				printf("  * %.*s\n", g->end - g->start, JSON_STRING + g->start);
+				jsmntok_t *g = &t[i+j+3];
+				if (jsoneq(JSON_STRING, &t[i+j+2], "type") == 0) {
+                       		 printf("\"type\": %.*s\n", g->end - g->start,JSON_STRING + g->start);
+				}
+				else if (jsoneq(JSON_STRING, &t[i+j+2], "url") == 0) {
+                                 printf("\"url\": %.*s\n", g->end - g->start,JSON_STRING + g->start);
+                                }
+				//jsmntok_t *g = &t[i+j+2];
+				//printf("  * %.*s\n", g->end - g->start, JSON_STRING + g->start);
 			}
+			printf("),");
 			i += t[i+1].size + 1;
 		} else {
 			printf("Unexpected key: %.*s\n", t[i].end-t[i].start,
