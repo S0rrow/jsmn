@@ -3,39 +3,91 @@
 #include <string.h>
 #include "../jsmn.h"
 
+
 typedef struct filedata* pfiledata;
 typedef struct filedata{
 	int size;
 	char* data;
-}filedata;
+} filedata;
+
 
 pfiledata readJSONFile() {
 	pfiledata data_json;
 	FILE* fp = fopen("data.json","r");
 	int size = 0;
-	while(!feof(fp)){
+	while(1){
 		char cache[100];
 		fgets(cache, 100, fp);
 		size = size + strlen(cache);
+		if(feof(fp)) break;
 	}
 	fclose(fp);
 	data_json = (pfiledata)malloc(size+sizeof(int));
 	data_json->size = size;
 	FILE* fp2 = fopen("data.json","r");
-	char* oneline = (char*)malloc(size);
-	while(!feof(fp2)) {
+	char* JSON_STRING = (char*)malloc(size);
+	while(1) {
 		char cache[100];
 		fgets(cache, 100, fp2);
-		strcat(oneline, cache);
+		if(feof(fp2)) break;
+		strcat(JSON_STRING, cache);
 	}
 	fclose(fp2);
-	data_json->data = oneline;
-	free(oneline);
+	data_json->data = JSON_STRING;
+	free(JSON_STRING);
 	return data_json;
 }
 
-int main(){
-	pfiledata JSONdata = readJSONFile();
-	printf("%s", JSONdata->data);
-	return 0;
+
+int jsoneq(char *json, jsmntok_t *tok, char *s) {
+	if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start &&
+			strncmp(json + tok->start, s, tok->end - tok->start) == 0) {
+		return 0;
+	}
+	return -1;
+}
+
+
+// readJSONFile()->data; jsmntok_t t[128]; int tokcount;
+void jsonNameList(char* jsonstr, jsmntok_t* t, int i, int counter){
+	if(t[i].type == JSMN_STRING && (t[i+1].type == JSMN_STRING || t[i+1].type == JSMN_ARRAY)) {
+		printf("[NAME%2d] %.*s\n", counter, t[i].end - t[i].start, jsonstr+t[i].start);
+	}
+	//t[i+1].end-t[i+1].start,JSON_STRING + t[i+1].start
+}
+
+
+int main() {
+	pfiledata JSON_DATA = readJSONFile();
+	printf("Size of data.json : %d\n", JSON_DATA->size);
+	int i;
+	int r;
+	char* JSON_STRING = JSON_DATA->data;
+	jsmn_parser p;
+	jsmntok_t t[128]; /* We expect no more than 128 tokens */
+
+	jsmn_init(&p);
+	r = jsmn_parse(&p, JSON_STRING, strlen(JSON_STRING), t, sizeof(t)/sizeof(t[0]));
+	if (r < 0) {
+		printf("Failed to parse JSON: %d\n", r);
+		return 1;
+	}
+
+	/* Assume the top-level element is an object */
+	if (r < 1 || t[0].type != JSMN_OBJECT) {
+		printf("Object expected\n");
+		return 1;
+	}
+	int counter = 1;
+	printf("***** NAME LIST *******\n");
+	for (i = 1; i < r; i++) {
+		jsonNameList(JSON_STRING, t, i, counter);
+		if(t[i+1].type == JSMN_ARRAY){
+			i += t[i+1].size + 1;
+		} else{
+			i++;
+		}
+		counter++;
+	}
+	return EXIT_SUCCESS;
 }
