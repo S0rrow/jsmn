@@ -85,17 +85,19 @@ void jsonNameList(char* jsonstr, jsmntok_t* t, int i, int count, int *nameTokLis
 	if(t[i].type == JSMN_STRING && trigger) {
 		//printf("\tin of if loop: t[i] type:%d, t[i+1] type:%d\n", t[i].type, t[i+1].type);
 		//printf("\tin if loop: i = %d\n", i);
-		printf("[NAME%2d] %.*s\n", count, t[i].end - t[i].start, jsonstr+t[i].start);
+		//printf("\tin if loop: count = %d\n", count);
 		nameTokList[count-1] = i;
 	}
-	//else if(t[i].type == JSMN_OBJECT && trigger){
-	//	printf("in else loop: i = %d\n", i);
-	//}
+	else if(t[i].type == JSMN_OBJECT && trigger){
+		//printf("in else loop: i = %d\n", i);
+		//printf("in else loop: count = %d\n", count);
+	}
 }
 
 void printNameList(char* jsonstr, jsmntok_t *t, int count, int *nameTokList){
 	int j = 0;
 	int i = 0;
+	printf("***** NAME LIST *******\n");
 	for(j = 1; j < count; j++){
 		i = nameTokList[j-1];
 		//printf("i = %d\n", i);
@@ -105,18 +107,56 @@ void printNameList(char* jsonstr, jsmntok_t *t, int count, int *nameTokList){
 
 void selectNameList(char* jsonstr, jsmntok_t *t, int count,int* nameTokList){
 	int counter=-1;
-	printf("Select name's no: ");
+	printf("Select name's no(0 to exit): ");
 	scanf("%d", &counter);
 	if(counter>count || counter == -1){
 		printf("Input error\n");
-	}else{
+	} else if(counter == 0){
+		return;
+	}	else{
 		int i = nameTokList[counter-1];
 		printf("[NAME%2d] %.*s\n", counter, t[i].end - t[i].start, jsonstr+t[i].start);
 		printf("%.*s\n", t[i+1].end - t[i+1].start, jsonstr+t[i+1].start);
 	}
 }
 
+void jsonObjectList(jsmntok_t* t, int i, int count, int *headTokList) {
+	if(t[i].type == JSMN_OBJECT){
+		headTokList[count] = i+1;
+	}
+}
 
+void printObjectList(char* jsonstr, jsmntok_t *t, int count, int *nameTokList){
+	int j = 0;
+	int i = 0;
+	printf("***** OBJECT LIST *******\n");
+	for(j = 1; j < count+1; j++){
+		i = nameTokList[j-1];
+		//printf("i = %d\n", i);
+		printf("[NAME%2d] %.*s\n", j, t[i+1].end - t[i+1].start, jsonstr+t[i+1].start);
+	}
+}
+
+void selectObjectList(char* jsonstr, jsmntok_t *t, int count, int* nameTokList, int* headTokList){
+	int counter = -1;
+	printf("Select name's number(0 to exit): ");
+	scanf("%d", &counter);
+	if(counter>count || counter == -1){
+		printf("Input error\n");
+	} else if(counter == 0){
+		return;
+	}	else{
+		int starter = headTokList[counter];
+		int ender = 1 + counter*10;
+		int j = 1 + (counter-1)*10;
+		int i = nameTokList[j-1];
+		printf("name: %.*s\n", t[i+1].end - t[i+1].start, jsonstr+t[i+1].start);
+		for(j+1; j < ender; j++){
+			i = nameTokList[j-1];
+			printf("\t[%.*s]: %.*s\n", t[i].end - t[i].start, jsonstr+t[i].start, t[i+1].end - t[i+1].start, jsonstr+t[i+1].start);
+		}
+	}
+}
 
 int main() {
 	pfiledata JSON_DATA = readJSONFile();
@@ -128,6 +168,8 @@ int main() {
 	jsmntok_t t[128]; /* We expect no more than 128 tokens */
 	int* nameTokList;
 	nameTokList = (int*)malloc(sizeof(int)*100);
+	//int* headTokList;
+	//headTokList = (int*)malloc(sizeof(int)*100);
 	jsmn_init(&p);
 	r = jsmn_parse(&p, JSON_STRING, strlen(JSON_STRING), t, sizeof(t)/sizeof(t[0]));
 	if (r < 0) {
@@ -141,21 +183,27 @@ int main() {
 		return 1;
 	}
 	int counter = 1;
-	printf("***** NAME LIST *******\n");
+	int headTokList[10] = {1,};
+	int headcount = 1;
+	int size = 0;
 	for (i = 1; i < r; i++) {
 		//printf("i = %d, counter = %d\n", i, counter);
 		jsonNameList(JSON_STRING, t, i, counter, nameTokList);
+		jsonObjectList(t, i, headcount, headTokList);
 		if(t[i+1].type == JSMN_ARRAY){
 			i += t[i+1].size + 1;
 		} else if(t[i].type == JSMN_OBJECT){
 			i += t[i+1].size -1;
 			counter--;
+			headcount++;
 		}	else{
 			i++;
 		}
 		counter++;
 	}
 	//printNameList(JSON_STRING, t, counter, nameTokList);
-	selectNameList(JSON_STRING, t, counter, nameTokList);
+	printObjectList(JSON_STRING, t, headcount, headTokList);
+	//selectNameList(JSON_STRING, t, counter, nameTokList);
+	selectObjectList(JSON_STRING, t, headcount, nameTokList, headTokList);
 	return EXIT_SUCCESS;
 }
