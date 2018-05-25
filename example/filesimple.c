@@ -76,13 +76,21 @@ void jsonNameList(char* jsonstr, jsmntok_t* t, int i, int counter){
 
 //jsonNameList(JSON_STRING, t, i, counter, nameTokList);
 void jsonNameList(char* jsonstr, jsmntok_t* t, int i, int count, int *nameTokList){
-	//printf("out of if loop: i = %d\n", i);
-	//printf("t[i] type:%d, t[i+1] type:%d\n", t[i].type, t[i+1].type);
-	if(t[i].type == JSMN_STRING && (t[i+1].type == JSMN_STRING || t[i+1].type == JSMN_ARRAY || t[i+1].type == JSMN_OBJECT)) {
-		//printf("in if loop: i = %d\n", i);
-		//printf("[NAME%2d] %.*s\n", count, t[i].end - t[i].start, jsonstr+t[i].start);
+	//printf("\tout of if loop: i = %d\n", i);
+	//printf("\tout of if loop: t[i] type:%d, t[i+1] type:%d\n", t[i].type, t[i+1].type);
+	int trigger1 = t[i+1].type == JSMN_STRING;
+	int trigger2 = t[i+1].type == JSMN_ARRAY;
+	int trigger3 = t[i+1].type == JSMN_OBJECT;
+	int trigger = trigger1 || trigger2 || trigger3;
+	if(t[i].type == JSMN_STRING && trigger) {
+		//printf("\tin of if loop: t[i] type:%d, t[i+1] type:%d\n", t[i].type, t[i+1].type);
+		//printf("\tin if loop: i = %d\n", i);
+		printf("[NAME%2d] %.*s\n", count, t[i].end - t[i].start, jsonstr+t[i].start);
 		nameTokList[count-1] = i;
 	}
+	//else if(t[i].type == JSMN_OBJECT && trigger){
+	//	printf("in else loop: i = %d\n", i);
+	//}
 }
 
 void printNameList(char* jsonstr, jsmntok_t *t, int count, int *nameTokList){
@@ -139,12 +147,15 @@ int main() {
 		jsonNameList(JSON_STRING, t, i, counter, nameTokList);
 		if(t[i+1].type == JSMN_ARRAY){
 			i += t[i+1].size + 1;
-		} else{
+		} else if(t[i].type == JSMN_OBJECT){
+			i += t[i+1].size -1;
+			counter--;
+		}	else{
 			i++;
 		}
 		counter++;
 	}
-	printNameList(JSON_STRING, t, counter, nameTokList);
+	//printNameList(JSON_STRING, t, counter, nameTokList);
 	selectNameList(JSON_STRING, t, counter, nameTokList);
 	return EXIT_SUCCESS;
 }

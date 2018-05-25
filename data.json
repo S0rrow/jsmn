@@ -12,7 +12,9 @@
   "examples": [
     "example/*.c"
   ],
-  "exclude": "test",
+  "exclude": "test"
+},
+  {
   "name": "jsmn2",
   "keywords": "json",
   "description": "Minimalistic JSON parser/tokenizer in C. It can be easily integrated into resource-limited or embedded projects",
@@ -26,7 +28,9 @@
   "examples": [
     "example/*.c"
   ],
-  "exclude": "test",
+  "exclude": "test"
+},
+  {
   "name": "jsmn3",
   "keywords": "json",
   "description": "Minimalistic JSON parser/tokenizer in C. It can be easily integrated into resource-limited or embedded projects",
