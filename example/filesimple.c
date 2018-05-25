@@ -69,12 +69,17 @@ void jsonNameList(char* jsonstr, jsmntok_t *t, int tokcount, int* nameTokList){
 */
 /*
 void jsonNameList(char* jsonstr, jsmntok_t* t, int i, int counter){
-	if(t[i].type == JSMN_STRING && (t[i+1].type == JSMN_STRING || t[i+1].type == JSMN_ARRAY)) {
+	int trigger1 = t[i+1].type == JSMN_STRING;
+	int trigger2 = t[i+1].type == JSMN_ARRAY;
+	int trigger3 = t[i+1].type == JSMN_OBJECT;
+	int trigger = trigger1 || trigger2 || trigger3;
+	if(t[i].type == JSMN_STRING && trigger) {
 		printf("[NAME%2d] %.*s\n", counter, t[i].end - t[i].start, jsonstr+t[i].start);
 	}
 }*/
 
 //jsonNameList(JSON_STRING, t, i, counter, nameTokList);
+
 void jsonNameList(char* jsonstr, jsmntok_t* t, int i, int count, int *nameTokList){
 	//printf("\tout of if loop: i = %d\n", i);
 	//printf("\tout of if loop: t[i] type:%d, t[i+1] type:%d\n", t[i].type, t[i+1].type);
@@ -126,12 +131,12 @@ void jsonObjectList(jsmntok_t* t, int i, int count, int *headTokList) {
 	}
 }
 
-void printObjectList(char* jsonstr, jsmntok_t *t, int count, int *nameTokList){
+void printObjectList(char* jsonstr, jsmntok_t *t, int headcount, int *headTokList){
 	int j = 0;
 	int i = 0;
 	printf("***** OBJECT LIST *******\n");
-	for(j = 1; j < count+1; j++){
-		i = nameTokList[j-1];
+	for(j = 1; j < headcount+1; j++){
+		i = headTokList[j-1];
 		//printf("i = %d\n", i);
 		printf("[NAME%2d] %.*s\n", j, t[i+1].end - t[i+1].start, jsonstr+t[i+1].start);
 	}
@@ -151,8 +156,8 @@ void selectObjectList(char* jsonstr, jsmntok_t *t, int count, int* nameTokList, 
 		int j = 1 + (counter-1)*10;
 		int i = nameTokList[j-1];
 		printf("name: %.*s\n", t[i+1].end - t[i+1].start, jsonstr+t[i+1].start);
-		for(j+1; j < ender; j++){
-			i = nameTokList[j-1];
+		for(j+1; j < ender-1; j++){
+			i = nameTokList[j];
 			printf("\t[%.*s]: %.*s\n", t[i].end - t[i].start, jsonstr+t[i].start, t[i+1].end - t[i+1].start, jsonstr+t[i+1].start);
 		}
 	}
@@ -189,6 +194,7 @@ int main() {
 	for (i = 1; i < r; i++) {
 		//printf("i = %d, counter = %d\n", i, counter);
 		jsonNameList(JSON_STRING, t, i, counter, nameTokList);
+		//jsonNameList(JSON_STRING, t, i, counter);
 		jsonObjectList(t, i, headcount, headTokList);
 		if(t[i+1].type == JSMN_ARRAY){
 			i += t[i+1].size + 1;
